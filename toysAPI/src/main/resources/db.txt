@@ -1,0 +1,336 @@
+Exclude
+BEGIN
+  CREATE TABLE IF NOT EXISTS JucariiEliminate (
+    ID_Eliminare INT AUTO_INCREMENT PRIMARY KEY,
+    ID_Jucarie INT,
+    Nume_Jucarie VARCHAR(255),
+    Pret DECIMAL(10, 2),
+    Cantitate INT,
+    Tara_Productie VARCHAR(255),
+    Varsta_Minima INT,
+    ID_Categorie INT
+  );
+
+  INSERT INTO JucariiEliminate (ID_Jucarie, Nume_Jucarie, Pret, Cantitate, Tara_Productie, Varsta_Minima, ID_Categorie)
+  SELECT ID_Jucarie, Nume_Jucarie, Pret, Cantitate, Tara_Productie, Varsta_Minima, ID_Categorie
+  FROM Jucarii
+  WHERE Cantitate = 0;
+
+  DELETE FROM Jucarii
+  WHERE Cantitate = 0;
+END
+
+InsertMoldova
+BEGIN
+  CREATE TABLE IF NOT EXISTS JucariiMoldova (
+    ID INT AUTO_INCREMENT PRIMARY KEY,
+    Nume_Jucarie VARCHAR(255),
+    Pret DECIMAL(10, 2),
+    Cantitate INT,
+    Tara_Productie VARCHAR(255),
+    Varsta_Minima INT
+  );
+
+  INSERT INTO JucariiMoldova (Nume_Jucarie, Pret, Cantitate, Tara_Productie, Varsta_Minima)
+  SELECT Nume_Jucarie, Pret, Cantitate, Tara_Productie, Varsta_Minima
+  FROM Jucarii
+  WHERE Tara_Productie = 'Moldova';
+END
+
+UpdateAgeToyCount
+BEGIN
+    DELETE FROM AgeToyCount;
+
+    INSERT INTO AgeToyCount (cod, Age, Total_Quantity)
+    SELECT
+        CONCAT('AGE_', Varsta_Minima) AS cod,
+        Varsta_Minima AS Age,
+        SUM(Cantitate) AS Total_Quantity
+    FROM
+        Jucarii
+    WHERE
+        Varsta_Minima IS NOT NULL
+    GROUP BY
+        Varsta_Minima;
+END
+
+UpdateCategoriesChart
+BEGIN
+    TRUNCATE TABLE CategoriesChart;
+
+    INSERT INTO CategoriesChart (codCategoryChart, Nume_Categorie, Total_Toys_Count)
+    SELECT DISTINCT codCategorie, Nume_Categorie, COUNT(ID_Jucarie) AS Total_Toys_Count
+    FROM Jucarii
+    JOIN Categorii ON Jucarii.ID_Categorie = Categorii.ID_Categorie
+    GROUP BY codCategorie, Nume_Categorie;
+END
+
+UpdateCountriesChart
+BEGIN
+    DELETE FROM CountriesChart;
+
+    INSERT INTO CountriesChart (codChart, Nume_Judet, Total_Quantity)
+    SELECT DISTINCT Tara_Productie, Tara_Productie AS Nume_Judet, SUM(Cantitate) AS Total_Quantity
+    FROM Jucarii
+    GROUP BY Tara_Productie;
+END
+
+UpdateDateSales
+BEGIN
+    DELETE FROM DateSales;
+
+    INSERT INTO DateSales (cod, Date, Sales)
+    SELECT
+    	CONCAT('COD_', Data_Vanzare) AS cod,
+        Data_Vanzare AS Date,
+        SUM(Cantitate_Vanduta) AS Sales
+    FROM
+        Vanzari
+    WHERE
+        ID_Jucarie IS NOT NULL
+    GROUP BY
+        Data_Vanzare;
+END
+
+UpdateDollMaterial
+BEGIN
+    DELETE FROM dollMaterial;
+
+    INSERT INTO dollMaterial (cod, material, count)
+    SELECT
+        CONCAT('COD_', Material) AS cod,
+        Material AS material,
+        COUNT(*) AS count
+    FROM
+        Papusile
+    GROUP BY
+        Material;
+END
+
+DROP TABLE IF EXISTS `AgeToyCount`;
+CREATE TABLE `AgeToyCount` (
+  `ID_AgeToyCount` int(11) NOT NULL,
+  `cod` varchar(255) DEFAULT NULL,
+  `Age` int(11) DEFAULT NULL,
+  `Total_Quantity` int(11) DEFAULT NULL,
+  `count` int(11) DEFAULT NULL,
+  `material` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `AgeToyCount`
+  ADD PRIMARY KEY (`ID_AgeToyCount`),
+  ADD UNIQUE KEY `cod` (`cod`);
+
+ALTER TABLE `AgeToyCount`
+  MODIFY `ID_AgeToyCount` int(11) NOT NULL AUTO_INCREMENT;
+COMMIT;
+
+DROP TABLE IF EXISTS `CategoriesChart`;
+CREATE TABLE `CategoriesChart` (
+  `ID_CategoryChart` int(11) NOT NULL,
+  `codCategoryChart` varchar(255) DEFAULT NULL,
+  `Nume_Categorie` varchar(255) DEFAULT NULL,
+  `Total_Toys_Count` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `CategoriesChart`
+  ADD PRIMARY KEY (`ID_CategoryChart`),
+  ADD UNIQUE KEY `codCategoryChart` (`codCategoryChart`);
+
+ALTER TABLE `CategoriesChart`
+  MODIFY `ID_CategoryChart` int(11) NOT NULL AUTO_INCREMENT;
+COMMIT;
+
+DROP TABLE IF EXISTS `Categorii`;
+CREATE TABLE `Categorii` (
+  `ID_Categorie` int(11) NOT NULL,
+  `codCategorie` varchar(255) DEFAULT NULL,
+  `Nume_Categorie` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `Categorii`
+  ADD PRIMARY KEY (`ID_Categorie`),
+  ADD UNIQUE KEY `codCategorie` (`codCategorie`),
+  ADD UNIQUE KEY `UK_8vj3q0ptb22xmghxct7s8ohi9` (`codCategorie`);
+
+ALTER TABLE `Categorii`
+  MODIFY `ID_Categorie` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+COMMIT;
+
+DROP TABLE IF EXISTS `CountriesChart`;
+CREATE TABLE `CountriesChart` (
+  `ID_Chart` int(11) NOT NULL,
+  `codChart` varchar(255) DEFAULT NULL,
+  `Nume_Judet` varchar(255) DEFAULT NULL,
+  `Total_Quantity` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `CountriesChart`
+  ADD PRIMARY KEY (`ID_Chart`),
+  ADD UNIQUE KEY `codChart` (`codChart`);
+
+ALTER TABLE `CountriesChart`
+  MODIFY `ID_Chart` int(11) NOT NULL AUTO_INCREMENT;
+COMMIT;
+
+DROP TABLE IF EXISTS `DateSales`;
+CREATE TABLE `DateSales` (
+  `ID_DateSales` int(11) NOT NULL,
+  `cod` varchar(255) DEFAULT NULL,
+  `Date` date DEFAULT NULL,
+  `Sales` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `DateSales`
+  ADD PRIMARY KEY (`ID_DateSales`),
+  ADD UNIQUE KEY `unique_cod_date` (`cod`,`Date`);
+
+ALTER TABLE `DateSales`
+  MODIFY `ID_DateSales` int(11) NOT NULL AUTO_INCREMENT;
+COMMIT;
+
+DROP TABLE IF EXISTS `dollMaterial`;
+CREATE TABLE `dollMaterial` (
+  `id` int(11) NOT NULL,
+  `cod` varchar(255) DEFAULT NULL,
+  `material` varchar(255) DEFAULT NULL,
+  `count` int(11) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `quantity` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `dollMaterial`
+  ADD PRIMARY KEY (`id`);
+
+ALTER TABLE `dollMaterial`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+COMMIT;
+
+DROP TABLE IF EXISTS `Jucarii`;
+CREATE TABLE `Jucarii` (
+  `ID_Jucarie` int(11) NOT NULL,
+  `codJucarii` varchar(255) DEFAULT NULL,
+  `Nume_Jucarie` varchar(255) DEFAULT NULL,
+  `Pret` double DEFAULT NULL,
+  `Cantitate` int(11) DEFAULT NULL,
+  `Tara_Productie` varchar(255) DEFAULT NULL,
+  `Varsta_Minima` int(11) DEFAULT NULL,
+  `ID_Categorie` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `Jucarii`
+  ADD PRIMARY KEY (`ID_Jucarie`),
+  ADD UNIQUE KEY `codJucarii` (`codJucarii`),
+  ADD UNIQUE KEY `UK_p9f4nrkyilutkuk43k9pikpnq` (`codJucarii`),
+  ADD KEY `ID_Categorie` (`ID_Categorie`);
+
+ALTER TABLE `Jucarii`
+  MODIFY `ID_Jucarie` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `Jucarii`
+  ADD CONSTRAINT `Jucarii_ibfk_1` FOREIGN KEY (`ID_Categorie`) REFERENCES `Categorii` (`ID_Categorie`) ON DELETE CASCADE ON UPDATE CASCADE;
+COMMIT;
+
+DROP TABLE IF EXISTS `JucariiMoldova`;
+CREATE TABLE `JucariiMoldova` (
+  `ID` int(11) NOT NULL,
+  `Nume_Jucarie` varchar(255) DEFAULT NULL,
+  `Pret` decimal(10,2) DEFAULT NULL,
+  `Cantitate` int(11) DEFAULT NULL,
+  `Tara_Productie` varchar(255) DEFAULT NULL,
+  `Varsta_Minima` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `JucariiMoldova`
+  ADD PRIMARY KEY (`ID`);
+
+ALTER TABLE `JucariiMoldova`
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT;
+COMMIT;
+
+DROP TABLE IF EXISTS `Papusile`;
+CREATE TABLE `Papusile` (
+  `ID_Papusa` int(11) NOT NULL,
+  `ID_Jucarie` int(11) DEFAULT NULL,
+  `codPapusa` varchar(255) DEFAULT NULL,
+  `Material` varchar(255) DEFAULT NULL,
+  `Inaltime` double DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `Papusile`
+  ADD PRIMARY KEY (`ID_Papusa`),
+  ADD UNIQUE KEY `codPapusa` (`codPapusa`),
+  ADD UNIQUE KEY `UK_nquoo587wrqen8bwgq4hiuobm` (`codPapusa`),
+  ADD KEY `ID_Jucarie` (`ID_Jucarie`);
+
+ALTER TABLE `Papusile`
+  MODIFY `ID_Papusa` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=127;
+
+ALTER TABLE `Papusile`
+  ADD CONSTRAINT `Papusile_ibfk_1` FOREIGN KEY (`ID_Jucarie`) REFERENCES `Jucarii` (`ID_Jucarie`) ON DELETE CASCADE ON UPDATE CASCADE;
+COMMIT;
+
+DROP TABLE IF EXISTS `roles`;
+CREATE TABLE `roles` (
+  `id` int(11) NOT NULL,
+  `name` enum('ROLE_ADMIN','ROLE_MODERATOR','ROLE_USER') DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `roles`
+  ADD PRIMARY KEY (`id`);
+
+ALTER TABLE `roles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+COMMIT;
+
+DROP TABLE IF EXISTS `user_roles`;
+CREATE TABLE `user_roles` (
+  `user_id` bigint(20) NOT NULL,
+  `role_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `user_roles`
+  ADD PRIMARY KEY (`user_id`,`role_id`),
+  ADD KEY `FKh8ciramu9cc9q3qcqiv4ue8a6` (`role_id`);
+
+ALTER TABLE `user_roles`
+  ADD CONSTRAINT `FKh8ciramu9cc9q3qcqiv4ue8a6` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`),
+  ADD CONSTRAINT `FKhfh9dx7w3ubf1co1vdev94g3f` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+COMMIT;
+
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` bigint(20) NOT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  `username` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `UKr43af9ap4edm43mmtq01oddj6` (`username`);
+
+ALTER TABLE `users`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+COMMIT;
+
+DROP TABLE IF EXISTS `Vanzari`;
+CREATE TABLE `Vanzari` (
+  `ID_Vanzare` int(11) NOT NULL,
+  `ID_Jucarie` int(11) DEFAULT NULL,
+  `codVanzare` varchar(255) DEFAULT NULL,
+  `Data_Vanzare` date DEFAULT NULL,
+  `Cantitate_Vanduta` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE `Vanzari`
+  ADD PRIMARY KEY (`ID_Vanzare`),
+  ADD UNIQUE KEY `codVanzare` (`codVanzare`),
+  ADD UNIQUE KEY `UK_8wdkiplfelug7mdktlyw687qs` (`codVanzare`),
+  ADD KEY `ID_Jucarie` (`ID_Jucarie`);
+
+ALTER TABLE `Vanzari`
+  MODIFY `ID_Vanzare` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `Vanzari`
+  ADD CONSTRAINT `Vanzari_ibfk_1` FOREIGN KEY (`ID_Jucarie`) REFERENCES `Jucarii` (`ID_Jucarie`) ON DELETE CASCADE ON UPDATE CASCADE;
+COMMIT;
