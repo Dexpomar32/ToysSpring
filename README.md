@@ -27,29 +27,29 @@ To run the project locally, follow these steps:
 
 1. Clone the repository:
 
-   ```bash
-    git clone https://github.com/Dexpomar32/ToysSpring.git
-   ```
+```bash
+git clone https://github.com/Dexpomar32/ToysSpring.git
+```
 
 2. Navigate to the project directory:
 
-  ```
-    cd ToysSpring
-  ```
+```
+cd ToysSpring
+```
 
 3. Configure the 'application.yaml' file with your database and application settings.
 
 4. Build and run the project using your preferred IDE or using the command line:
 
-   ```
-    ./mvnw spring-boot:run
-   ```
+```
+./mvnw spring-boot:run
+```
 
 or
 
-  ```
-    mvn spring-boot:run
-  ```
+```
+mvn spring-boot:run
+```
 
 ## License
 
